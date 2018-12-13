@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="20" nextobjectid="12">
+ <tileset firstgid="1" source="test.tsx"/>
+ <tileset firstgid="973" source="objects.tsx"/>
+ <tileset firstgid="977" name="cristal_object" tilewidth="16" tileheight="16" tilecount="2" columns="2">
+  <image source="cristal_object.png" trans="ff00ff" width="32" height="16"/>
+ </tileset>
+ <layer id="19" name="Tile" width="40" height="23">
+  <data encoding="base64" compression="zlib">
+   eJzt0rlNA1EAhGHbXCF3CClQgTmrMIEJgArM2cD0AFRgzl5owJyt8AWIyCvbKxkhsSP90gt255992lqtSpUqVar89dTRwAQmMYVpzIzJpzf6wxO+8IY/dqTf801sYgvb2MEu9sa0T2/0hyd84Q1/mgX7OjjBKc5wjgtcjmmf3ugPT/jCG/50CvZ1cYs73OMBj3gq4X6uD35Gb/SHJ3zhDX+6Bft6eMEr3vCOD3yW2DdM9EZ/eMIX3vCnV7Bv1jfPYR4LWMQSlr/vYsXPu4p1bGBtxLN3o+PHrTf6wxO+8IY/dvTdNygtjn0c4RiHI569m1ajnHvYtN3lNdcNrhqjndsl76XMxoMR+a1tVar8p3wBc21Pqw==
+  </data>
+ </layer>
+ <objectgroup id="6" name="Eagle">
+  <object id="3" gid="974" x="572" y="64" width="32" height="32"/>
+  <object id="8" gid="977" x="576" y="73.6667" width="16" height="16"/>
+ </objectgroup>
+</map>
