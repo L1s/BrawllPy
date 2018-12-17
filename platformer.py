@@ -163,12 +163,12 @@ class Player(Actor):
 		
 		if self.state is not State.Idle:
 
-			# if self.weaponPicked:
-			# 	seq = "seq_idle_arm"
-			# else:
-			# 	seq = "seq_idle"
+			if self.weaponPicked:
+				seq = "seq_idle_arm"
+			else:
+				seq = "seq_idle"
 				
-			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences["seq_idle_arm"], 0)
+			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences[seq], 0)
 			self.state = State.Idle
 			self.xspeed = 0
 
@@ -176,11 +176,11 @@ class Player(Actor):
 	def set_running(self):
 		""" sets running state, idempotent """
 		if self.state is not State.Run:
-			# if self.weaponPicked:
-			# 	seq = "seq_run_arm"
-			# else:
-			# 	seq = "seq_run"
-			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences["seq_run_arm"], 0)
+			if self.weaponPicked:
+				seq = "seq_run_arm"
+			else:
+				seq = "seq_run"
+			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences[seq], 0)
 			self.state = State.Run
 
 	def set_jump(self):
@@ -188,11 +188,11 @@ class Player(Actor):
 	
 		if self.state is not State.Jump:
 			self.yspeed = -350
-			# if self.weaponPicked:
-			# 	seq = "seq_jump_arm"
-			# else:
-			# 	seq = "seq_jump"
-			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences["seq_jump_arm"], 0)
+			if self.weaponPicked:
+				seq = "seq_jump_arm"
+			else:
+				seq = "seq_jump"
+			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences[seq], 0)
 			self.state = State.Jump
 			self.medium = Medium.Air
 			sounds.play("jump", 0)
@@ -225,7 +225,6 @@ class Player(Actor):
 		""" sets weapon picked animation """
 		self.direction = direction
 		self.weaponPicked = True
-		print("armored")
 	###########################################	
 
 
@@ -409,7 +408,8 @@ class Player(Actor):
 			self.set_weapon(direction)
 			actor.kill()	 			
 			Effect(actor.x, actor.y, spriteset_vanish, seq_pack.sequences["seq_vanish"])
-			sounds.play("pickup", 1)	
+			sounds.play("pickup", 1)
+			self.set_jump()	
 	#################################		
 
 	def update(self):
