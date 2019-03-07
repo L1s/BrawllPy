@@ -43,7 +43,7 @@ def load_objects(file_name, layer_name, first_gid):
 
 class State:
 	""" player states """
-	Undefined, Idle, Run, Jump, Hit = range(5)
+	Undefined, Idle, Run, Jump, Hit, Attack = range(6)
 
 class Direction:
 	""" player orientations """
@@ -139,6 +139,7 @@ class Player(Actor):
 		self.xspeed = 0
 		self.yspeed = 0
 		self.weaponPicked = False
+		self.attack_frame_counter = 0
 		self.set_idle()
 		self.sprite.set_position(self.x, self.y)
 		self.width = self.size[0]
@@ -152,7 +153,6 @@ class Player(Actor):
 		self.healthBar = Healthbar()
 		self.lifeBar = Lifebar()
 		self.lives = 5
-		self.frame = 0
 		self.exploid_x = 0
 		self.exploid_y = 0
 
@@ -164,13 +164,11 @@ class Player(Actor):
 			# 	seq = "seq_idle_arm"
 			# else:
 			# 	seq = "seq_idle"
-			seq = "seq_idle_sia"
 				
+			seq = "seq_idle_sia"	
 			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences[seq], 0)
 			self.state = State.Idle
-			self.xspeed = 0
-
-						
+			self.xspeed = 0					
 
 	def set_running(self):
 		""" sets running state, idempotent """
@@ -224,15 +222,26 @@ class Player(Actor):
 		self.sprite.set_picture(12)
 		self.immunity = 90
 		sounds.play("kick", 0)
-		#######################################################################################
 		self.healthBar.decreaseHp()
 
+	#########################################	
+	def set_attack(self):
+		seq = ""
+		if self.state is not State.Attack:
+			self.state = State.Attack
+			self.attack_frame_counter = 0
+			if self.medium is Medium.Floor:
+				seq = "seq_attack_sia"
+			elif self.medium is Medium.Air:
+				seq = "seq_airAtack_sia"
+			
+			self.animation.set_sprite_animation(self.sprite.index, seq_pack.sequences[seq], 0)
+				
 	##########################################
 	def set_weapon(self, direction):
 		""" sets weapon picked animation """
 		self.direction = direction
 		self.weaponPicked = True
-	###########################################	
 
 	def update_direction(self):
 		""" updates sprite facing depending on direction """
@@ -265,7 +274,7 @@ class Player(Actor):
 				self.xspeed -= Player.xspeed_delta
 			elif self.xspeed < 0:
 				self.xspeed += Player.xspeed_delta
-			if self.xspeed == 0:
+			if self.xspeed == 0 and not self.attack_processing():
 				self.set_idle()
 			
 			
@@ -277,10 +286,15 @@ class Player(Actor):
 					self.jump = True
 					self.waitForFloor = True
 				else:
-					self.jump = False		
+					self.jump = False	
+
+			##################################################
+			if window.get_input(Input.B):			
+				player.set_attack()
 
 	def update_air(self):
-		""" process input when player is in air medium """		
+		""" process input when player is in air medium """				
+
 		if not world.freezePlayer:	
 
 			if window.get_input(Input.RIGHT) and self.xspeed < Player.xspeed_limit:
@@ -288,7 +302,7 @@ class Player(Actor):
 			elif window.get_input(Input.LEFT) and self.xspeed > -Player.xspeed_limit:
 				self.xspeed -= self.jspeed_delta
 		
-
+			
 			
 			if window.get_input(Input.A) and self.yspeed > 0 and self.jump_counter < 3:
 				self.jump_counter += 1
@@ -299,9 +313,14 @@ class Player(Actor):
 				# if not self.weaponPicked:	
 				# 	self.sprite.set_picture(22)
 				# else:
-				# 	self.sprite.set_picture(22)	
-				player.set_jump()	
-		
+				# 	self.sprite.set_picture(22)
+				if not self.attack_processing():	
+					player.set_jump()	
+		###########################################################
+
+			if window.get_input(Input.B):			
+				player.set_attack()
+	
 		# return True	 
 
 	def check_left(self, x, y):
@@ -410,6 +429,18 @@ class Player(Actor):
 		 			sounds.play("crush", 2)
 		return
 
+	def check_attack_enemies(self, x, y):
+		""" checks attack an enemy. If so, kills it and spawns a death animation """
+		px, py = x+self.width/2, y+self.height
+		for actor in actors:
+		 	actor_type = type(actor)
+		 	if actor_type is Eagle:
+		 		ex, ey = actor.x + actor.size[0]/2, actor.y + actor.size[1]/2
+		 		if abs(px - ex) < 50 and py - ey < 50:
+		 			actor.kill()
+		 			Effect(actor.x, actor.y - 10, spriteset_death, seq_pack.sequences["seq_death"])
+		 			sounds.play("crush", 2)
+
 	def check_hit(self, x, y, direction):
 		""" returns if get hurt by enemy at select position and direction"""
 		if self.immunity is 0 and self.rectangle.check_point(x, y):
@@ -423,7 +454,7 @@ class Player(Actor):
 			actor.kill()	 			
 			Effect(actor.x, actor.y, spriteset_vanish, seq_pack.sequences["seq_vanish"])
 			sounds.play("pickup", 1)
-			self.set_jump()	
+			# self.set_jump()	
 
 	def check_death(self):	
 		if self.y > HEIGHT + player.size[1]/2:
@@ -457,10 +488,22 @@ class Player(Actor):
 		self.lives -= 1
 		self.x = 70
 		self.y = -120					
+	
+	def attack_processing(self):
+
+		if self.state is State.Attack and self.medium is Medium.Floor:
+			self.attack_frame_counter  += 1	
+			if self.attack_frame_counter  <= 30:
+				return True
+		elif self.state is State.Attack and self.medium is Medium.Air:
+			return True
+		return False		    			
 	#################################		
 
 	def update(self):
 		""" process input and updates state once per frame """
+
+
 		world.freezePlayer = False
 		oldx = self.x
 		oldy = self.y
@@ -500,7 +543,10 @@ class Player(Actor):
 
 		########################
 		self.check_death()
-									
+		if self.state is State.Attack:
+			self.check_attack_enemies(int(self.x), int(self.y))
+		# if self.y > oldy:
+		# 	print("falt")					
 		#######################	
 
 		# check and fix 4-way collisions depending on motion direction
@@ -646,7 +692,6 @@ class Lifebar(Actor):
 		""" decreases num of lifes """
 		self.lifeStage += 1
 		self.sprite.set_picture(self.lifeStage)
-		print(self.lifeStage)
 		if self.lifeStage == 5:
 			# player.healthBar.sprite.disable()
 			# player.lifeBar.sprite.disable()
@@ -869,7 +914,6 @@ class Sound(object):
 	""" Manages sound effects """
 	def __init__(self, path):		
 		self._sounds = dict()
-		print(path)
 		if path is None:
 			self.path = "./"
 		else:
